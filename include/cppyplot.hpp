@@ -193,7 +193,7 @@ class cppyplot{
     zmq::socket_t socket_;
     std::stringstream plot_cmds_;
   public:
-    cppyplot(const std::string& ip_addr=HOST_ADDR, const std::string& python_path=PYTHON_PATH)
+    cppyplot(const std::string& python_path=PYTHON_PATH, const std::string& ip_addr=HOST_ADDR)
     {
       context_ = zmq::context_t(1);
       socket_  = zmq::socket_t(context_, ZMQ_PUB);
