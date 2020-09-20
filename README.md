@@ -60,6 +60,8 @@ pass the containers by wrapping them with macro `_p`
 
 The macro `_p` captures variable name and expands into ("variable_name", variable) pair.
 
+**Note**: Every container that is passed to python for plotting will be converted into an numpy array. This means fancy array slicing and array manipulations is possible. Just treat data as if it is originated in python with numpy.
+
 ## ToDo
 * ### Support for Raw-String literals  
 By adding raw string literal support it is easy to write plotting commands in the following manner.
