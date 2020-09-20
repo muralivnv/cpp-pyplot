@@ -13,7 +13,7 @@
 * [asteval](https://anaconda.org/conda-forge/asteval)
 
 ## Motivation
-Many C++ plotting libraries that exist today, they tend to replicate python plotting API as much as they can to replicate API on C++. There are 2 limitations I observed 
+Many C++ plotting libraries that exist today, they tend to replicate python plotting API as much as they can to replicate API on C++. There are 3 limitations I observed 
 1.  There is only much of what a developer can acheive on C++ to replicate python API (for example, using named input args during function call is not that easy to implement on C++). 
 2.  The end user need to learn new plotting API. 
 3.  No proper documentation. 
