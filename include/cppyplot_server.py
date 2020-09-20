@@ -10,18 +10,36 @@ else:
 socket.setsockopt(zmq.LINGER, 0)
 socket.setsockopt_string(zmq.SUBSCRIBE, "")
 
-import struct
-import numpy as np
+lib_sym = {}
 
+import struct
+
+## Import numpy and register the object in the symbol table
+import numpy as np
+lib_sym['np'] = np
+
+## Import matplotlib and register plot object in the symbol table
 import matplotlib.pyplot as plt
+lib_sym['plt'] = plt
+
+## Import seaborn and register seaborn object in the symbol table
+# import seaborn as sns
+# lib_sym['sns'] = sns
+
+## Import bokeh and register bokeh objects in the symbol table
+# from bokeh.layouts import column, row
+# lib_sym['column'] = column
+# lib_sym['row']    = row
+
+# from bokeh.plotting import ColumnDataSource, figure, output_file, show
+# lib_sym['ColumnDataSource'] = ColumnDataSource
+# lib_sym['figure']           = figure
+# lib_sym['output_file']      = output_file
+# lib_sym['show']             = show
 
 from asteval import Interpreter
 
 print("Started Plotting Client .... ")
-
-plot_objs        = {}
-plot_objs['plt'] = plt
-plot_objs['np']  = np
 
 plot_cmd  = None
 plot_data = []
@@ -54,7 +72,7 @@ while(True):
         
     elif(zmq_message[0:8] == b"finalize"):
         data_table = {key: val for key,val in zip(data_keys, plot_data)}
-        sym_table = {**plot_objs, **data_table}
+        sym_table = {**lib_sym, **data_table}
         aeval = Interpreter(usersyms=sym_table)
         aeval.eval(plot_cmd)
         plot_cmd  = None

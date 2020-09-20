@@ -39,6 +39,8 @@ pyp << "plt.show()";
 pyp.data_args(_p(vec));
 ```
 
+For more complicated examples using matplotlib-subplots and bokeh-lib see **examples** folder in this repo.
+
 ## ```pyp.data_args```
 Member function, `data_args`, is a variadic template function. Each container that is passed into `data_args` need to be wrapped using the macro `_p` (`p` stands for *pair*).   
 For example, instead of passing containers like   
