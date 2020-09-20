@@ -19,6 +19,7 @@
 #include <thread>
 #include <chrono>
 #include <utility>
+#include <filesystem>
 
 // Eigen
 #if __has_include(<Eigen/Core>)
@@ -200,7 +201,10 @@ class cppyplot{
       socket_.bind(ip_addr);
       std::this_thread::sleep_for(100ms);
       
-      std::system(std::string_view("start /min "s + python_path + " cppyplot_server.py "s + ip_addr).data());
+      std::filesystem::path path(__FILE__);
+      std::string server_file = path.parent_path().string() + "/cppyplot_server.py";
+
+      std::system(std::string_view("start /min "s + python_path + " "s + server_file + " "s + ip_addr).data());
       std::this_thread::sleep_for(1.5s);
     }
 
