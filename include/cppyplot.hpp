@@ -202,9 +202,15 @@ class cppyplot{
       std::this_thread::sleep_for(100ms);
       
       std::filesystem::path path(__FILE__);
-      std::string server_file = path.parent_path().string() + "/cppyplot_server.py";
 
-      std::system(std::string_view("start /min "s + python_path + " "s + server_file + " "s + ip_addr).data());
+      std::string server_file_spawn{"start /min "};
+      server_file_spawn.append(python_path);
+      server_file_spawn += " ";
+      server_file_spawn += path.parent_path().string();
+      server_file_spawn += "/cppyplot_server.py ";
+      server_file_spawn.append(ip_addr);
+
+      std::system(server_file_spawn.c_str());
       std::this_thread::sleep_for(1.5s);
     }
 
@@ -220,12 +226,36 @@ class cppyplot{
     inline void operator<<(const std::string& cmds)
     { this->push(cmds); }
 
+    template<typename T>
+    inline std::string create_header(const std::string& key, const T& cont) noexcept
+    {
+      using elem_type = typename T::value_type;
+      std::string header{"data|"};
+
+      // variable name
+      header += key;
+      header.append("|");
+
+      // container element type (float or int or ...)
+      header += ValType<elem_type>::typestr;
+      header.append("|");
+
+      // total number of elements in the container
+      header += size_str(cont);
+      header.append("|");
+
+      // shape of the container 
+      header += shape_str(cont);
+
+      return header;
+    }
+
     template <typename T>
     void send_container(const std::string& key, const T& cont)
     {
       using elem_type = typename T::value_type;
 
-      std::string data_header{"data|" + key + "|"+ ValType<elem_type>::typestr + "|" + size_str(cont) + "|" + shape_str(cont)};
+      std::string data_header{create_header(key, cont)};
       zmq::message_t msg(data_header.c_str(), data_header.length());
       socket_.send(msg, zmq::send_flags::none);
 
