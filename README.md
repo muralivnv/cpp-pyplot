@@ -78,6 +78,15 @@ The macro `_p` captures variable name and expands into ("variable_name", variabl
 
 **Note**: Every container that is passed to python for plotting will be converted into an numpy array. This means fancy array slicing and array manipulations is possible. Just treat data as if it is originated in python with numpy.
 
+Currently supports
+* 1D std vector
+* 1D std array
+* 2D std vector
+* 2D std array
+* Eigen containers
+
+For information on how to include support for custom containers read section [custom container support](https://github.com/muralivnv/Cppyplot#custom-container-support). 
+
 ## How-it-works
 Plot object `cppyplot` passes all the commands and containers to a python server (which is spawned automatically when the `cppyplot` object is created) using ZeroMQ. The spawned python server uses [asteval](https://anaconda.org/conda-forge/asteval) library to parse the passed commands. This means any command that can be used in python can be written on C++ side.     
 
@@ -96,63 +105,69 @@ As the library uses zmq, link the source file which uses cppyplot.hpp with the l
 ## Custom Container Support
 By defining 3 helper functions, any c++ container can be adapted to pass onto python side. 
 
-#### Define `size_str`
-Define function to transform container size (total number of elems) into string object. See example down below where `size_str` function was defined for containers of type `std::array` and `std::vector`.
+Define the following functions at the end of the **cppyplot_container_support.h** located in the include folder.
+
+#### Define `container_size`
+Define function to return container size (total number of elems). See example down below where `container_size` function was defined for containers of type `std::array` and `std::vector`.
 
 ```cpp
-// 1D-array
-template<typename T, std::size_t>
-std::string size_str(const std::array<T>& container)
-{
-  return std::to_string(container.size());
-}
-
-// 2D-vector
-template<typename T>
-std::string size_str(const std::vector<std::vector<T>>& container)
-{
-  return std::to_string(container.size()*container[0].size());
-}
-```
-
-Follow the link, [Eigen_Support](https://github.com/muralivnv/Cppyplot/blob/master/include/cppyplot.hpp#L171) to look at Eigen container support.  
-**Note**: This function need to be defined before the class defintion `cppyplot` in file `cppyplot.hpp`.  
-
-#### Define `shape_str`
-Define function to transform container shape (number of row, number of cols) into string object. See example down below where `shape_str` function was defined for containers of type `std::vector` and `std::vector<std::vector>`. This shape information will be used to reshape the array on python side using numpy.
-
-```cpp
-// 1D-vector
-template<typename T>
-std::string shape_str(const std::vector<T>& container)
-{
-  return "(" + std::to_string(container.size()) + ",)";
-} // returns "(n_rows,)"
-
-// 2D-vector
-template<typename T>
-std::string shape_str(const std::vector<std::vector<T>>& container)
-{
-  return "(" + std::to_string(container.size()) + "," + container.front().size() + ")";
-} // returns "(n_rows, n_cols)"
-```
-
-#### Define `void_ptr`
-The underlying zmq publisher requires pointer to the raw buffer inside the container to pass the data to python server. For that purpose define function `void_ptr` to extract data pointer and cast it into `(void*)`. See example down below which shows how to extract raw pointers for containers of type `std::vector` and `std::array`.
-
-```cpp
-// 1D-vector
-template<typename T>
-void* void_ptr(const std::vector<T>& vec)
-{
-  return (void*)vec.data();
-}
-
 // 1D-array
 template<typename T, std::size_t N>
-void* void_ptr(const std::array<T, N>& arr)
-{
-  return (void*)arr.data();
-}
+inline std::size_t container_size(const std::array<T, N>& data)
+{ (void)data; return N; }
 
+// 2D-vector
+template<typename T>
+inline std::size_t container_size(const std::vector<std::vector<T>>& data)
+{ return data.size()*data[0].size(); }
+```
+
+#### Define `container_shape`
+Define function to return container shape (number of row, number of cols). See example down below where `container_shape` function was defined for containers of type `std::vector` and `std::vector<std::vector>`. This shape information will be used to reshape the array on python side using numpy.
+
+```cpp
+// 1D-vector
+template<typename T>
+inline std::array<std::size_t,1> container_shape(const std::vector<T>& data)
+{ return std::array<std::size_t, 1>{data.size()}; }
+
+// 2D-vector
+template<typename T>
+inline std::array<std::size_t, 2> container_shape(const std::vector<std::vector<T>>& data)
+{ return std::array<std::size_t, 2>{data.size(), data[0].size()}; }
+```
+
+#### Define `fill_zmq_buffer`
+The underlying zmq buffer requires either copying data to its buffer or pointing the zmq buffer to the container buffer. 
+
+Use the technique down below to point zmq buffer to the container buffer if the data inside the container is stored in one single continuous buffer. See example down below, where `fill_zmq_buffer` is defined for 1D-vector. As the internal vector buffer is stored in one continuous buffer, we can just point zmq buffer to vector buffer with custom dealloc function.
+
+```cpp
+// 1D-vector
+template<typename T>
+inline void fill_zmq_buffer(const std::vector<T>& data, zmq::message_t& buffer)
+{
+  buffer.rebuild((void*)data.data(), sizeof(T)*data.size(), custom_dealloc, nullptr);
+}
+```
+
+If the buffer insider custom container is not stored in one single continuous buffer(for example `vector<vector<float>>`) then use mempcy to copy data.
+
+```cpp
+// 2D vector
+// this uses mempcpy, there will be a runtime overhead
+template<typename T, std::size_t N, std::size_t M>
+inline void fill_zmq_buffer(const std::array<std::array<T, M>, N>& data, zmq::message_t& buffer)
+{
+  buffer.rebuild(sizeof(T)*N*M);
+  char * ptr = static_cast<char*>(buffer.data());
+
+  std::size_t offset = 0u;
+  size_t n_bytes = sizeof(T)*M;
+  for (std::size_t i = 0u; i < N; i++)
+  {
+    memcpy(ptr+offset, data[i].data(), n_bytes);
+    offset += n_bytes;
+  }
+}
 ```

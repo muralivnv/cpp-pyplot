@@ -55,143 +55,15 @@ constexpr decltype(auto) compile_time_str(const char(&str)[N])
 
 namespace Cppyplot
 {
-  
-/* ZMQ requires custom dealloc function for zero-copy */
-void custom_dealloc(void* data, void* hint)
-{
-  (void)data;
-  (void)hint; 
-  return; 
-}
 
 // utility function for raw string literal parsing
 std::string dedent_string(const std::string_view raw_str);
 
 template<typename T>
-struct ValType{
-  const static std::size_t elem_size = 0u;
-  inline const static std::string typestr{"0"};
-};
+std::string shape_str(const T& shape);
 
-template<>
-struct ValType<char>{
-  const static std::size_t elem_size = sizeof(char);
-  inline const static std::string typestr{"c"};
-};
-
-template<>
-struct ValType<signed char>{
-  const static std::size_t elem_size = sizeof(signed char);
-  inline const static std::string typestr{"b"};
-};
-
-template<>
-struct ValType<unsigned char>{
-  const static std::size_t elem_size = sizeof(unsigned char);
-  inline const static std::string typestr{"B"};
-};
-
-template<>
-struct ValType<short>{
-  const static std::size_t elem_size = sizeof(short);
-  inline const static std::string typestr{"h"};
-};
-
-template<>
-struct ValType<unsigned short>{
-  const static std::size_t elem_size = sizeof(unsigned short);
-  inline const static std::string typestr{"H"};
-};
-
-template<>
-struct ValType<int>{
-  const static std::size_t elem_size = sizeof(int);
-  inline const static std::string typestr{"i"};
-};
-
-template<>
-struct ValType<unsigned int>{
-  const static std::size_t elem_size = sizeof(unsigned int);
-  inline const static std::string typestr{"I"};
-};
-
-template<>
-struct ValType<long>{
-  const static std::size_t elem_size = sizeof(long);
-  inline const static std::string typestr{"l"};
-};
-
-template<>
-struct ValType<unsigned long>{
-  const static std::size_t elem_size = sizeof(unsigned long);
-  inline const static std::string typestr{"L"};
-};
-
-template<>
-struct ValType<long long>{
-  const static std::size_t elem_size = sizeof(long long);
-  inline const static std::string typestr{"q"};
-};
-
-template<>
-struct ValType<unsigned long long>{
-  const static std::size_t elem_size = sizeof(unsigned long long);
-  inline const static std::string typestr{"Q"};
-};
-
-template<>
-struct ValType<float>{
-  const static std::size_t elem_size = sizeof(float);
-  inline const static std::string typestr{"f"};
-};
-
-template<>
-struct ValType<double>{
-  const static std::size_t elem_size = sizeof(double);
-  inline const static std::string typestr{"d"};
-};
-
-
-template<typename T>
-inline std::string shape_str(const std::vector<T>& data)
-{
-  return "(" + std::to_string(data.size()) +",)";
-}
-
-template<typename T>
-inline std::string size_str(const std::vector<T>& data)
-{
-   return std::to_string(data.size());
-}
-
-template<typename T>
-inline void* void_ptr(const std::vector<T>& data) noexcept
-{
-  return (void*)data.data();
-}
-
-
-#if defined (EIGEN_AVAILABLE)
-/*Reference: https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html */
-template<typename Derived>
-inline std::string shape_str(const Eigen::EigenBase<Derived>& eigen_container)
-{
-  return "(" + std::to_string(eigen_container.rows()) + "," + std::to_string(eigen_container.cols()) +")";
-}
-
-template<typename Derived>
-inline std::string size_str(const Eigen::EigenBase<Derived>& eigen_container)
-{
-  return std::to_string(eigen_container.size());
-}
-
-template<typename Derived>
-inline void* void_ptr(const Eigen::EigenBase<Derived>& eigen_container)
-{
-  return (void*)eigen_container.derived().data();
-}
-
-#endif 
+#include "cppyplot_types.h"
+#include "cppyplot_container_support.h"
 
 class cppyplot{
   private:
@@ -240,7 +112,7 @@ class cppyplot{
     template<typename T>
     inline std::string create_header(const std::string& key, const T& cont) noexcept
     {
-      using elem_type = typename T::value_type;
+      auto elem_type = get_ValType(cont);
       std::string header{"data|"};
 
       // variable name
@@ -248,15 +120,15 @@ class cppyplot{
       header.append("|");
 
       // container element type (float or int or ...)
-      header += ValType<elem_type>::typestr;
+      header += std::string{decltype(elem_type)::typestr};
       header.append("|");
 
       // total number of elements in the container
-      header += size_str(cont);
+      header += std::to_string(container_size(cont));
       header.append("|");
 
       // shape of the container 
-      header += shape_str(cont);
+      header += shape_str(container_shape(cont));
 
       return header;
     }
@@ -264,14 +136,12 @@ class cppyplot{
     template <typename T>
     void send_container(const std::string& key, const T& cont)
     {
-      using elem_type = typename T::value_type;
-
       std::string data_header{create_header(key, cont)};
       zmq::message_t msg(data_header.c_str(), data_header.length());
       socket_.send(msg, zmq::send_flags::none);
 
-      zmq::message_t payload(void_ptr(cont), ValType<elem_type>::elem_size*cont.size(), 
-                              custom_dealloc, nullptr);
+      zmq::message_t payload;
+      fill_zmq_buffer(cont, payload);
       socket_.send(payload, zmq::send_flags::none);
     }
 
@@ -350,6 +220,21 @@ std::string dedent_string(const std::string_view raw_str)
     }
     return out_str;
   }
+}
+
+
+template<typename T>
+std::string shape_str(const T& shape)
+{
+  std::string out_str("(");
+  for (auto size : shape)
+  {
+    out_str.append(std::to_string(size));
+    out_str.append(",");
+  }
+  out_str.append(")");
+
+  return out_str;
 }
 
 }
