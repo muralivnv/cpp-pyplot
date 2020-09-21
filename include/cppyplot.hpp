@@ -53,7 +53,9 @@ constexpr decltype(auto) compile_time_str(const char(&str)[N])
 #define DATA_PAIR(X) std::make_pair(compile_time_str(STRINGIFY(X)), std::ref(X))
 #define _p(X) DATA_PAIR(X)
 
-
+namespace Cppyplot
+{
+  
 /* ZMQ requires custom dealloc function for zero-copy */
 void custom_dealloc(void* data, void* hint)
 {
@@ -61,6 +63,9 @@ void custom_dealloc(void* data, void* hint)
   (void)hint; 
   return; 
 }
+
+// utility function for raw string literal parsing
+std::string dedent_string(const std::string_view raw_str);
 
 template<typename T>
 struct ValType{
@@ -226,6 +231,12 @@ class cppyplot{
     inline void operator<<(const std::string& cmds)
     { this->push(cmds); }
 
+    template<unsigned int N>
+    void raw(const char (&input_cmds)[N])
+    {
+      plot_cmds_ << dedent_string(input_cmds);
+    }
+
     template<typename T>
     inline std::string create_header(const std::string& key, const T& cont) noexcept
     {
@@ -279,5 +290,68 @@ class cppyplot{
       plot_cmds_.str("");
     }
 };
+
+
+// utility functions
+decltype(auto) non_empty_line_idx(const std::string_view in_str)
+{
+  int new_line_pos        = -1;
+  unsigned int num_spaces = 0u;
+  for (unsigned int i = 0u; i < in_str.length(); i++)
+  {
+    if (in_str[i] == '\n')
+    { new_line_pos = i; num_spaces = 0u; }
+    else if (    (in_str[i] != ' ' ) 
+              && (in_str[i] != '\t'))
+    { break; }
+    else
+    { num_spaces ++; }
+  }
+  return std::make_tuple(new_line_pos+1, num_spaces);
+}
+
+
+std::string dedent_string(const std::string_view raw_str)
+{
+  auto [occupied_line_start, num_spaces] = non_empty_line_idx(raw_str);
+  if (num_spaces == 0u)
+  { return std::string(raw_str); }
+  else
+  {
+    std::string out_str;
+    out_str.reserve(raw_str.length());
+    
+    int line_start = -1;
+    bool process_spaces = true;
+    int cur_space_count = 0;
+    for (unsigned int i = static_cast<unsigned int>(occupied_line_start); i < raw_str.length(); i++)
+    {
+      if (process_spaces == true)
+      {
+        if ((raw_str[i] != ' ') && (raw_str[i] != '\t'))
+        {
+          process_spaces = false;
+          line_start     = i;
+        }
+        else
+        { cur_space_count++; }
+      }
+      else if (raw_str[i] == '\n')
+      {
+        if (line_start != -1)
+        {
+          line_start -= (cur_space_count - num_spaces);
+          out_str.append(raw_str.substr(line_start, i - line_start + 1u)); 
+        }
+        process_spaces  = true;
+        line_start      = -1;
+        cur_space_count = 0;
+      }
+    }
+    return out_str;
+  }
+}
+
+}
 
 #endif

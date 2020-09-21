@@ -1,4 +1,4 @@
-#include "cppyplot.hpp"
+#include "../../include/cppyplot.hpp"
 
 #include <cmath>
 #include <algorithm>
@@ -13,8 +13,11 @@ int main()
   std::transform(angles_rad.begin(), angles_rad.end(), sin_angle.begin(), [](auto& elem){return std::sinf(elem);});
   std::transform(angles_rad.begin(), angles_rad.end(), cos_angle.begin(), [](auto& elem){return std::cosf(elem);});
 
-  cppyplot pyp;
+  Cppyplot::cppyplot pyp;
 
+  /*
+    Using the stream insertion operator <<
+  */
   pyp << "plt.figure(figsize=(6,5))";
   pyp << "plt.subplot(2,1,1)";
   pyp << "plt.plot(angles_rad, sin_angle, 'r-*', markersize=2, linewidth=1)";
@@ -25,7 +28,26 @@ int main()
   pyp << "plt.grid(True)";
   pyp << "plt.xlabel(\"angle (rad)\")";
   pyp << "plt.ylabel(\"cos\", fontsize=12)";
-  pyp << "plt.show()";
+  pyp << "plt.show(block=False)";
+  pyp.data_args(_p(angles_rad), _p(sin_angle), _p(cos_angle));
+
+  /*
+    Using the raw string literal support with member function 'raw'
+  */
+  pyp.raw(R"pyp(
+
+  plt.figure(figsize=(6,5))
+  plt.subplot(2,1,1)
+  plt.plot(angles_rad, sin_angle, 'r-*', markersize=2, linewidth=1)
+  plt.ylabel("sin", fontsize=12)
+  plt.grid(True)
+  plt.subplot(2,1,2)
+  plt.plot(angles_rad, cos_angle, 'g-o', markersize=2, linewidth=1)
+  plt.grid(True)
+  plt.xlabel("angle (rad)")
+  plt.ylabel("cos", fontsize=12)
+  plt.show()
+  )pyp");
   pyp.data_args(_p(angles_rad), _p(sin_angle), _p(cos_angle));
 
   std::cout << "Good bye ...";
