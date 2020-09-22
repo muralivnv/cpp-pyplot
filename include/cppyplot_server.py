@@ -26,6 +26,10 @@ lib_sym['plt'] = plt
 # import seaborn as sns
 # lib_sym['sns'] = sns
 
+## Import pandas and register pandas object in the symbol table
+# import pandas as pd
+# lib_sym['pd'] = pd
+
 # Import bokeh and register bokeh objects in the symbol table
 # from bokeh.layouts import column, row
 # lib_sym['column'] = column
@@ -69,11 +73,16 @@ while(True):
         data_payload  = socket.recv()
         data_payload  = np.array((struct.unpack("="+(data_type*data_len), data_payload)))
         plot_data[data_info[1]] = np.reshape(data_payload, data_shape)
-
     elif(zmq_message[0:8] == b"finalize"):
         sym_table = {**lib_sym, **plot_data}
         aeval = Interpreter(usersyms=sym_table)
         aeval.eval(plot_cmd)
+
+        # Some error happened pause execution by creating sample matplotlib windows
+        if aeval.error_msg != None:
+            plt.figure(figsize=(6,5))
+            plt.title("Exception from ASTEVAL, check stdout", fontsize=14)
+            plt.show()
         plot_cmd  = None
         plot_data = {}
     elif(zmq_message == b"exit"):

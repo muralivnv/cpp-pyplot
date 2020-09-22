@@ -12,46 +12,57 @@
 
 int main()
 {
-  Eigen::Matrix<double, 1000, 1> mat;
-  mat.setRandom();
-
   Cppyplot::cppyplot pyp;
 
-  pyp.raw(R"pyp(
-    fig = plt.figure(figsize=(6,5))
-    ax = sns.distplot(mat, kde=False,
-                      hist_kws={"histtype": "bar", "rwidth": 3,
-                                "alpha": 0.6, "color": "b"})
-    sns.distplot(mat, kde=False,
-                 hist_kws={"histtype": "step", "rwidth": 2,
-                           "alpha": 0.9, "color": "orange"})
-    ax.set_xlabel("Data bins", fontsize=12)
-    ax.set_ylabel("Frequency", fontsize=12)
-    ax.set_title("Histogram of C++ Eigen container", fontsize=14)
-    plt.show()
-  )pyp");
-  pyp.data_args(_p(mat));
+  Eigen::Matrix<double, 5000, 2> mat;
 
   // bivariate plot from https://seaborn.pydata.org/examples/layered_bivariate_plot.html
 
-  std::vector<std::vector<double>> rand_mat (1000, std::vector<double>(2));
+  std::vector<std::vector<double>> rand_mat (5000, std::vector<double>(2));
   std::random_device seed;
   std::mt19937 gen(seed());
-  std::normal_distribution<double> norm(0.0, 10.0);
+  std::normal_distribution<double> norm(0.0, 5.0);
 
-  // fill matrix
+  // fill 2D vector
   for (auto& row: rand_mat)
   {
     for (auto& elem: row)
     { elem = norm(gen); }
   }
 
+  // fill eigen matrix
+  for (auto& row: mat.rowwise())
+  {
+    for (auto& elem : row)
+    { elem = norm(gen); }
+  }
+
+  // Using Eigen matrix
   pyp.raw(R"pyp(
   sns.set_theme(style="dark")
+  f, ax = plt.subplots(figsize=(6,6))
+  sns.scatterplot(x=mat[:,0], y=mat[:,1], s=5, color="0.15")
+  sns.histplot(x=mat[:,0], y=mat[:,1], bins=50, pthresh=0.1, cmap="mako")
+  sns.kdeplot(x=mat[:,0], y=mat[:,1], levels=5, color="w", linewidths=1)
+  plt.grid(True)
+  plt.xlabel("X", fontsize=12)
+  plt.ylabel("Y", fontsize=12)
+  plt.title("Numpy type slicing on C++ Eigen matrix", fontsize=14)
+  plt.show(block=False)
+    )pyp");
+  
+  pyp.data_args(_p(mat));
+
+  // Using 2D std-vector
+  pyp.raw(R"pyp(
   f, ax = plt.subplots(figsize=(6,6))
   sns.scatterplot(x=rand_mat[:,0], y=rand_mat[:,1], s=5, color="0.15")
   sns.histplot(x=rand_mat[:,0], y=rand_mat[:,1], bins=50, pthresh=0.1, cmap="mako")
   sns.kdeplot(x=rand_mat[:,0], y=rand_mat[:,1], levels=5, color="w", linewidths=1)
+  plt.grid(True)
+  plt.xlabel("X", fontsize=12)
+  plt.ylabel("Y", fontsize=12)
+  plt.title("Numpy type slicing on C++ 2D vector", fontsize=14)
   plt.show()
     )pyp");
   
