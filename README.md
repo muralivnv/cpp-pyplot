@@ -1,6 +1,6 @@
 # Cppyplot
 
-### Simple, header-only library to plot c++ containers using python plotting tools and ZMQ protocol
+### Simple yet powerful, header-only library to plot c++ containers using python plotting tools and ZMQ protocol
 
 #### **C++ Requirements**
 * -std >= C++17
