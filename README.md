@@ -22,6 +22,11 @@ Even if the user is fine with the above limitations, he/she is limited to just o
 
 Instead of reinventing the wheel this library just uses python to do it's plotting. Given the awesome open source libraries, ZeroMQ and python-ASTEVAL, data pipe latency with ZeroMQ for inter process communication and latency for string command execution on python is negligible. 
 
+## To the User
+⭐ this repo if you are currently using it or if you find this implementation interesting. This way, if any other user comes across this repo, he/she may find it more interesting to dig a little deeper. 
+
+And if you are currently using this library, post a sample plotting snippet using the Issue tab and tagging the issue with label `sample_usage`.
+
 ## Usage
 ```cpp
 // include header 
