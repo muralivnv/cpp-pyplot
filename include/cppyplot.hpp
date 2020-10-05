@@ -80,12 +80,19 @@ class cppyplot{
       
       std::filesystem::path path(__FILE__);
 
-      std::string server_file_spawn{"start /min "};
+      std::string server_file_spawn;
+#if defined(_WIN32) || defined(_WIN64)
+      server_file_spawn.append("start /min "s);
+#endif
       server_file_spawn.append(python_path);
-      server_file_spawn += " ";
+      server_file_spawn += " "s;
       server_file_spawn += path.parent_path().string();
-      server_file_spawn += "/cppyplot_server.py ";
+      server_file_spawn += "/cppyplot_server.py "s;
       server_file_spawn.append(ip_addr);
+
+#if defined(__unix__)
+      server_file_spawn += " &"s;
+#endif
 
       std::system(server_file_spawn.c_str());
       std::this_thread::sleep_for(1.5s);
@@ -104,15 +111,22 @@ class cppyplot{
     { this->push(cmds); }
 
     template<unsigned int N>
-    void raw(const char (&input_cmds)[N])
+    void raw(const char (&input_cmds)[N]) noexcept
     {
       plot_cmds_ << dedent_string(input_cmds);
+    }
+
+    template<unsigned int N, typename... Val_t>
+    void raw(const char (&input_cmds)[N], std::pair<std::string, Val_t>&&... args)
+    {
+      plot_cmds_ << dedent_string(input_cmds);
+      data_args(std::forward<std::pair<std::string, Val_t>>(args)...);
     }
 
     template<typename T>
     inline std::string create_header(const std::string& key, const T& cont) noexcept
     {
-      auto elem_type = get_ValType(cont);
+      auto elem_type = unpack_type<T>();
       std::string header{"data|"};
 
       // variable name
@@ -120,7 +134,7 @@ class cppyplot{
       header.append("|");
 
       // container element type (float or int or ...)
-      header += std::string{decltype(elem_type)::typestr};
+      header += std::string{elem_type.typestr};
       header.append("|");
 
       // total number of elements in the container
@@ -135,7 +149,7 @@ class cppyplot{
 
     template <typename T>
     void send_container(const std::string& key, const T& cont)
-    {
+    { 
       std::string data_header{create_header(key, cont)};
       zmq::message_t msg(data_header.c_str(), data_header.length());
       socket_.send(msg, zmq::send_flags::none);
@@ -145,8 +159,8 @@ class cppyplot{
       socket_.send(payload, zmq::send_flags::none);
     }
 
-    template<typename ... T>
-    void data_args(const T&&... args)
+    template<typename... Val_t>
+    void data_args(std::pair<std::string, Val_t>&&... args)
     {
       (send_container(args.first, args.second), ...);
 
@@ -163,7 +177,7 @@ class cppyplot{
 
 
 // utility functions
-decltype(auto) non_empty_line_idx(const std::string_view in_str)
+auto non_empty_line_idx(const std::string_view in_str)
 {
   int new_line_pos        = -1;
   unsigned int num_spaces = 0u;
@@ -179,7 +193,6 @@ decltype(auto) non_empty_line_idx(const std::string_view in_str)
   }
   return std::make_tuple(new_line_pos+1, num_spaces);
 }
-
 
 std::string dedent_string(const std::string_view raw_str)
 {
@@ -198,7 +211,7 @@ std::string dedent_string(const std::string_view raw_str)
     {
       if (process_spaces == true)
       {
-        if ((raw_str[i] != ' ') && (raw_str[i] != '\t'))
+        if ((raw_str[i] != ' ') && (raw_str[i] != '\t') && (raw_str[i] != '\n'))
         {
           process_spaces = false;
           line_start     = i;
@@ -222,19 +235,18 @@ std::string dedent_string(const std::string_view raw_str)
   }
 }
 
-
 template<typename T>
 std::string shape_str(const T& shape)
 {
-  std::string out_str("(");
+  std::stringstream out_str;
+  out_str << '(';
   for (auto size : shape)
   {
-    out_str.append(std::to_string(size));
-    out_str.append(",");
+    out_str << size << ',';
   }
-  out_str.append(")");
+  out_str << ')';
 
-  return out_str;
+  return out_str.str();
 }
 
 }

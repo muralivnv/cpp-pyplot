@@ -41,9 +41,10 @@ lib_sym['plt'] = plt
 # lib_sym['output_file']      = output_file
 # lib_sym['show']             = show
 
-from asteval import Interpreter
-
+from asteval import Interpreter, make_symbol_table
+import time
 print("Started Plotting Client .... ")
+aeval = Interpreter()
 
 plot_cmd  = None
 plot_data = {}
@@ -75,11 +76,12 @@ while(True):
         plot_data[data_info[1]] = np.reshape(data_payload, data_shape)
     elif(zmq_message[0:8] == b"finalize"):
         sym_table = {**lib_sym, **plot_data}
-        aeval = Interpreter(usersyms=sym_table)
+        aeval.symtable = make_symbol_table(use_numpy=True, **sym_table)
         aeval.eval(plot_cmd)
 
         # Some error happened pause execution by creating sample matplotlib windows
         if aeval.error_msg != None:
+            aeval.error_msg = None
             plt.figure(figsize=(6,5))
             plt.title("Exception from ASTEVAL, check stdout", fontsize=14)
             plt.show()

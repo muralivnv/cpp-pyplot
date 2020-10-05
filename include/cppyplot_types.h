@@ -8,108 +8,59 @@ struct ValType{
 };
 
 template<typename T>
-auto unpack_type(const T& arg)
-{
-  (void)arg;
-  return unpack_type<typename T::value_type>(typename T::value_type{});
-}
+constexpr auto unpack_type()
+{  return unpack_type<typename T::value_type>();  }
 
 template<>
-auto unpack_type<char> (const char& arg)
-{
-  (void)arg;
-  return ValType<char, 'c'>{};
-}
+constexpr auto unpack_type<char>()
+{  return ValType<char, 'c'>{};  }
 
 template<>
-auto unpack_type<signed char> (const signed char& arg)
-{
-  (void)(arg);
-  return ValType<signed char, 'b'>{};
-}
+constexpr auto unpack_type<signed char>()
+{  return ValType<signed char, 'b'>{};  }
 
 template<>
-auto unpack_type<unsigned char> (const unsigned char& arg)
-{
-  (void)(arg);
-  return ValType<unsigned char, 'B'>{};
-}
+constexpr auto unpack_type<unsigned char>()
+{  return ValType<unsigned char, 'B'>{};  }
 
 template<>
-auto unpack_type<short> (const short& arg)
-{
-  (void)(arg);
-  return ValType<short, 'h'>{};
-}
+constexpr auto unpack_type<short> ()
+{  return ValType<short, 'h'>{};  }
 
 template<>
-auto unpack_type<unsigned short> (const unsigned short& arg)
-{
-  (void)arg;
-  return ValType<unsigned short, 'H'>{};
-}
+constexpr auto unpack_type<unsigned short> ()
+{  return ValType<unsigned short, 'H'>{};  }
 
 template<>
-auto unpack_type<int> (const int& arg)
-{
-  (void)arg;
-  return ValType<int, 'i'>{};
-}
+constexpr auto unpack_type<int> ()
+{  return ValType<int, 'i'>{};  }
 
 template<>
-auto unpack_type<unsigned int> (const unsigned int& arg)
-{
-  (void)arg;
-  return ValType<unsigned int, 'I'>{};
-}
+constexpr auto unpack_type<unsigned int> ()
+{  return ValType<unsigned int, 'I'>{};  }
 
 template<>
-auto unpack_type<long> (const long& arg)
-{
-  (void)arg;
-  return ValType<long, 'l'>{};
-}
+constexpr auto unpack_type<long> ()
+{  return ValType<long, 'l'>{};  }
 
 template<>
-auto unpack_type<unsigned long> (const unsigned long& arg)
-{
-  (void)arg;
-  return ValType<unsigned long, 'L'>{};
-}
+constexpr auto unpack_type<unsigned long> ()
+{  return ValType<unsigned long, 'L'>{};  }
 
 template<>
-auto unpack_type<long long> (const long long& arg)
-{
-  (void)arg;
-  return ValType<long long, 'q'>{};
-}
+constexpr auto unpack_type<long long> ()
+{  return ValType<long long, 'q'>{};  }
 
 template<>
-auto unpack_type<unsigned long long> (const unsigned long long& arg)
-{
-  (void)arg;
-  return ValType<unsigned long long, 'Q'>{};
-}
+constexpr auto unpack_type<unsigned long long> ()
+{  return ValType<unsigned long long, 'Q'>{};  }
 
 template<>
-auto unpack_type<float> (const float& arg)
-{
-  (void)arg;
-  return ValType<float, 'f'>{};
-}
+constexpr auto unpack_type<float> ()
+{  return ValType<float, 'f'>{};  }
 
 template<>
-auto unpack_type<double> (const double& arg)
-{
-  (void)arg;
-  return ValType<double, 'd'>{};
-}
-
-template<typename T>
-decltype(auto) get_ValType(const T& arg)
-{
-  (void)arg;
-  return unpack_type(arg);
-}
+constexpr auto unpack_type<double> ()
+{  return ValType<double, 'd'>{};  }
 
 #endif
