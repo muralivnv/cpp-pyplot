@@ -61,8 +61,7 @@ pyp.raw("Rpyp(
   plt.xlabel("index")
   plt.ylabel("vec");
   plt.show()
-)pyp");
-pyp.data_args(_p(vec));
+)pyp", _p(vec));
 ```
 
 For more complicated examples using matplotlib-subplots and bokeh-lib see **examples** folder in this repo.
