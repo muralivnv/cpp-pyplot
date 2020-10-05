@@ -47,8 +47,7 @@ int main()
   plt.xlabel("angle (rad)")
   plt.ylabel("cos", fontsize=12)
   plt.show()
-  )pyp");
-  pyp.data_args(_p(angles_rad), _p(sin_angle), _p(cos_angle));
+  )pyp", _p(angles_rad), _p(sin_angle), _p(cos_angle));
 
   std::cout << "Good bye ...";
   

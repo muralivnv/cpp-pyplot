@@ -41,10 +41,8 @@ int main()
   plot.scatter('x', 'y', source=source, fill_color="orange", alpha=0.6)
   layout = row(plot)
   show(layout)
-  )pyp");
+  )pyp", _p(rand_vecx), _p(rand_vecy));
 
-  pyp.data_args(_p(rand_vecx), _p(rand_vecy));
+  return EXIT_SUCCESS;
   
-
-
 }
