@@ -67,41 +67,54 @@ std::string shape_str(const T& shape);
 
 class cppyplot{
   private:
-    zmq::context_t context_;
-    zmq::socket_t socket_;
+    static zmq::context_t context_;
+    static zmq::socket_t socket_;
+    static bool is_zmq_established_;
+    bool close_subscriber_ = false;
+
     std::stringstream plot_cmds_;
   public:
     cppyplot(const std::string& python_path=PYTHON_PATH, const std::string& ip_addr=HOST_ADDR)
     {
-      context_ = zmq::context_t(1);
-      socket_  = zmq::socket_t(context_, ZMQ_PUB);
-      socket_.bind(ip_addr);
-      std::this_thread::sleep_for(100ms);
+      if (cppyplot::is_zmq_established_ == false)
+      {
+        cppyplot::socket_.bind(ip_addr);
+        std::this_thread::sleep_for(100ms);
       
-      std::filesystem::path path(__FILE__);
+        std::filesystem::path path(__FILE__);
+        std::string server_file_spawn;
 
-      std::string server_file_spawn;
 #if defined(_WIN32) || defined(_WIN64)
-      server_file_spawn.append("start /min "s);
+        server_file_spawn.append("start /min "s);
 #endif
-      server_file_spawn.append(python_path);
-      server_file_spawn += " "s;
-      server_file_spawn += path.parent_path().string();
-      server_file_spawn += "/cppyplot_server.py "s;
-      server_file_spawn.append(ip_addr);
+        server_file_spawn.append(python_path);
+        server_file_spawn += " "s;
+        server_file_spawn += path.parent_path().string();
+        server_file_spawn += "/cppyplot_server.py "s;
+        server_file_spawn.append(ip_addr);
 
 #if defined(__unix__)
-      server_file_spawn += " &"s;
+        server_file_spawn += " &"s;
 #endif
+        std::system(server_file_spawn.c_str());
+        std::this_thread::sleep_for(1.5s);
 
-      std::system(server_file_spawn.c_str());
-      std::this_thread::sleep_for(1.5s);
+        cppyplot::is_zmq_established_ = true;
+        close_subscriber_   = true;
+      }
     }
 
     ~cppyplot()
     {
-      zmq::message_t exit_msg("exit", 4);
-      socket_.send(exit_msg, zmq::send_flags::none);
+      // if the python server is spawned through this class instance, then send exit command
+      if (close_subscriber_ == true)
+      {
+        zmq::message_t exit_msg("exit", 4);
+        cppyplot::socket_.send(exit_msg, zmq::send_flags::none);
+        
+        cppyplot::is_zmq_established_ = false;
+        cppyplot::socket_.close();
+      }
     }
 
     inline void push(const std::string& cmds)
@@ -152,11 +165,11 @@ class cppyplot{
     { 
       std::string data_header{create_header(key, cont)};
       zmq::message_t msg(data_header.c_str(), data_header.length());
-      socket_.send(msg, zmq::send_flags::none);
+      cppyplot::socket_.send(msg, zmq::send_flags::none);
 
       zmq::message_t payload;
       fill_zmq_buffer(cont, payload);
-      socket_.send(payload, zmq::send_flags::none);
+      cppyplot::socket_.send(payload, zmq::send_flags::none);
     }
 
     template<typename... Val_t>
@@ -165,16 +178,20 @@ class cppyplot{
       (send_container(args.first, args.second), ...);
 
       zmq::message_t cmds(plot_cmds_.str());
-      socket_.send(cmds, zmq::send_flags::none);
+      cppyplot::socket_.send(cmds, zmq::send_flags::none);
 
       zmq::message_t final("finalize", 8);
-      socket_.send(final, zmq::send_flags::none);
+      cppyplot::socket_.send(final, zmq::send_flags::none);
 
       /* reset */
       plot_cmds_.str("");
     }
 };
 
+// initialize static variables
+bool cppyplot::is_zmq_established_ = false;
+zmq::context_t cppyplot::context_  = zmq::context_t(1);
+zmq::socket_t cppyplot::socket_    = zmq::socket_t(cppyplot::context_, ZMQ_PUB);
 
 // utility functions
 auto non_empty_line_idx(const std::string_view in_str)

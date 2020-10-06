@@ -13,14 +13,14 @@
 * [asteval](https://anaconda.org/conda-forge/asteval)
 
 ## Motivation
-Many C++ plotting libraries that exist today, they tend to replicate python plotting API as much as they can in C++. There are 3 limitations I observed 
-1.  There is only so much a developer can acheive on C++ to replicate python API (for example, using named input args during function call is not that easy to implement on C++).  
+Many C++ plotting libraries that exist today, they tend to replicate python plotting API in C++. There are 3 limitations with this approach. 
+1.  There is only so much a developer can acheive in C++ to replicate python plotting API (for example, using named input args during function call is not that easy to implement on C++).  
 2.  The end user need to learn new plotting API. 
 3.  The most important of all, no/incomplete documentation. 
 
 Even if the user is fine with the above limitations, he/she is limited to just one plotting library. What if there comes a need to use awesome **seaborn** capabilities or **bokeh-plot** features or **Plotly**, there are no packages that are readily available and even if they are, I am pretty sure that the above limitations will come into action.   
 
-Instead of reinventing the wheel this library just uses python to do it's plotting. Given the awesome open source libraries, ZeroMQ and python-ASTEVAL, data pipe latency with ZeroMQ for inter process communication and latency for string command execution on python is negligible. 
+Instead of reinventing the wheel this library uses python to do it's plotting. Given the awesome open source libraries, ZeroMQ and python-ASTEVAL, data pipe latency with ZeroMQ for inter process communication and latency for string command execution on python is negligible. 
 
 ## To the User
 ⭐ this repo if you are currently using it or if you find this implementation interesting. This way, if any other user comes across this repo, he/she may find it more interesting to dig a little deeper. 
@@ -58,6 +58,7 @@ pyp.data_args(_p(vec));
 
 /* 
   Using Raw-string literal with member function 'raw'
+  Notice how the member function 'raw' takes containers as arguments along with the plotting commands
 */
 pyp.raw("Rpyp(
   plt.figure(figsize=(12,7))
@@ -71,8 +72,8 @@ pyp.raw("Rpyp(
 
 For more complicated examples using matplotlib-subplots and bokeh-lib see **examples** folder in this repo.
 
-## ```pyp.data_args```
-Member function, `data_args`, is a variadic template function. Each container that is passed into `data_args` need to be wrapped using the macro `_p` (`p` stands for *pair*).   
+## ```pyp.data_args``` and ```pyp.raw```
+Member function, `data_args` and `raw`, is a variadic template function. Each container that is passed to `data_args` (or) `raw` need to be wrapped using the macro `_p` (`p` stands for *pair*).   
 For example, instead of passing containers like   
 `pyp.data_args(vec_x, vec_y, vec_z, ...)`   
 pass the containers by wrapping them with macro `_p`   

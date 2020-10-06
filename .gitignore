@@ -1,1 +1,4 @@
 zmq/*
+.vscode/*
+*.dll
+*.pdb
