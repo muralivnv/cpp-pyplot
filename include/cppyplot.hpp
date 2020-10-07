@@ -16,6 +16,7 @@
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 
+#include <cstdlib>
 #include <thread>
 #include <chrono>
 #include <utility>
@@ -70,15 +71,15 @@ class cppyplot{
     static zmq::context_t context_;
     static zmq::socket_t socket_;
     static bool is_zmq_established_;
-    bool close_subscriber_ = false;
-
+    static std::string python_path_;
+    static std::string zmq_ip_addr_;
     std::stringstream plot_cmds_;
   public:
-    cppyplot(const std::string& python_path=PYTHON_PATH, const std::string& ip_addr=HOST_ADDR)
+    cppyplot()
     {
       if (cppyplot::is_zmq_established_ == false)
       {
-        cppyplot::socket_.bind(ip_addr);
+        cppyplot::socket_.bind(cppyplot::zmq_ip_addr_);
         std::this_thread::sleep_for(100ms);
       
         std::filesystem::path path(__FILE__);
@@ -87,11 +88,11 @@ class cppyplot{
 #if defined(_WIN32) || defined(_WIN64)
         server_file_spawn.append("start /min "s);
 #endif
-        server_file_spawn.append(python_path);
+        server_file_spawn.append(cppyplot::python_path_);
         server_file_spawn += " "s;
         server_file_spawn += path.parent_path().string();
         server_file_spawn += "/cppyplot_server.py "s;
-        server_file_spawn.append(ip_addr);
+        server_file_spawn.append(cppyplot::zmq_ip_addr_);
 
 #if defined(__unix__)
         server_file_spawn += " &"s;
@@ -100,20 +101,30 @@ class cppyplot{
         std::this_thread::sleep_for(1.5s);
 
         cppyplot::is_zmq_established_ = true;
-        close_subscriber_   = true;
+
+        std::atexit(zmq_kill_command);
       }
     }
+    cppyplot(cppyplot& other) = delete;
+    cppyplot operator=(cppyplot& other) = delete;
+    ~cppyplot() {}
 
-    ~cppyplot()
+    static void set_python_path(const std::string& python_path) noexcept
+    { cppyplot::python_path_ = python_path; }
+
+    static void set_host_ip(const std::string& host_ip) noexcept
+    { cppyplot::zmq_ip_addr_ = host_ip; }
+
+    static void zmq_kill_command()
     {
-      // if the python server is spawned through this class instance, then send exit command
-      if (close_subscriber_ == true)
+      if (cppyplot::is_zmq_established_ == true)
       {
+        // if the python server is spawned through this class instance, then send exit command
         zmq::message_t exit_msg("exit", 4);
         cppyplot::socket_.send(exit_msg, zmq::send_flags::none);
         
         cppyplot::is_zmq_established_ = false;
-        cppyplot::socket_.close();
+        cppyplot::socket_.disconnect(cppyplot::zmq_ip_addr_);
       }
     }
 
@@ -189,9 +200,11 @@ class cppyplot{
 };
 
 // initialize static variables
-bool cppyplot::is_zmq_established_ = false;
-zmq::context_t cppyplot::context_  = zmq::context_t(1);
-zmq::socket_t cppyplot::socket_    = zmq::socket_t(cppyplot::context_, ZMQ_PUB);
+zmq::context_t cppyplot::context_             = zmq::context_t(1);
+zmq::socket_t  cppyplot::socket_              = zmq::socket_t(cppyplot::context_, ZMQ_PUB);
+bool           cppyplot::is_zmq_established_  = false;
+std::string    cppyplot::python_path_{PYTHON_PATH};
+std::string    cppyplot::zmq_ip_addr_{HOST_ADDR};
 
 // utility functions
 auto non_empty_line_idx(const std::string_view in_str)

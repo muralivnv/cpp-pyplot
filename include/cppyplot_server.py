@@ -1,6 +1,12 @@
 import zmq
 import sys
 
+from threading import Thread
+from asteval import Interpreter, make_symbol_table
+
+import queue
+import struct
+
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
 if (len(sys.argv) > 1):
@@ -11,8 +17,6 @@ socket.setsockopt(zmq.LINGER, 0)
 socket.setsockopt_string(zmq.SUBSCRIBE, "")
 
 lib_sym = {}
-
-import struct
 
 ## Import numpy and register the object in the symbol table
 import numpy as np
@@ -41,13 +45,26 @@ lib_sym['plt'] = plt
 # lib_sym['output_file']      = output_file
 # lib_sym['show']             = show
 
-from asteval import Interpreter, make_symbol_table
-import time
-print("Started Plotting Client .... ")
-aeval = Interpreter()
-
+############
+## function to receive all publisher messages
+############
+msg_queue   = queue.Queue()
+kill_thread = False
+aeval     = Interpreter()
 plot_cmd  = None
 plot_data = {}
+
+def subscriber():
+    global socket, msg_queue
+    while (not kill_thread):
+        if (socket.poll(50, zmq.POLLIN)):
+            zmq_message = socket.recv()
+            msg_queue.put(zmq_message)
+
+subscriber_thread = Thread(target=subscriber)
+subscriber_thread.start()
+
+print("Started Plotting Server .... ")
 
 def parse_shape(shape_str:str)->tuple:
     shape = []
@@ -63,17 +80,23 @@ def parse_shape(shape_str:str)->tuple:
     return tuple(shape)
 
 while(True):
-    zmq_message = socket.recv()
+    zmq_message = None
+    if (not msg_queue.empty()):
+        zmq_message = msg_queue.get()
+        msg_queue.task_done()
+    else:
+        continue
+    
     if (zmq_message[0:4] == b"data"):
         data_info     = zmq_message.decode("utf-8").split('|')
-        
         # 0: data, 1: var_name, 2: var_type, 3: n_elems, 4: array_shape
         data_type     = data_info[2]
         data_len      = int(data_info[3])
         data_shape    = parse_shape(data_info[4])
-        data_payload  = socket.recv()
+        data_payload  = msg_queue.get()
         data_payload  = np.array((struct.unpack("="+(data_type*data_len), data_payload)))
         plot_data[data_info[1]] = np.reshape(data_payload, data_shape)
+        msg_queue.task_done()
     elif(zmq_message[0:8] == b"finalize"):
         sym_table = {**lib_sym, **plot_data}
         aeval.symtable = make_symbol_table(use_numpy=True, **sym_table)
@@ -88,6 +111,8 @@ while(True):
         plot_cmd  = None
         plot_data = {}
     elif(zmq_message == b"exit"):
+        kill_thread = True
+        subscriber_thread.join()
         sys.exit(0)
     else:
         plot_cmd = zmq_message.decode("utf-8")
