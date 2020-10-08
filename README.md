@@ -89,8 +89,11 @@ For more complicated examples using matplotlib-subplots and bokeh-lib see **exam
 ### Animation
 
 See [Sinusoidal_animation.cpp](https://github.com/muralivnv/cpp-pyplot/blob/master/examples/for_matplotlib/sinusoidal_animation.cpp) to reproduce below animation.
-
 ![](https://github.com/muralivnv/cpp-pyplot/blob/master/misc/sin.gif)
+
+### 2D Distribution Plotting
+See [distplot.cpp]() to reproduce below figure.
+![](https://github.com/muralivnv/cpp-pyplot/blob/master/misc/distplot.png)
 
 ## How-it-works
 Plot object `cppyplot` passes all the commands and containers to a python server (which is spawned automatically when an `cppyplot` object is created) using ZeroMQ. The spawned python server uses [asteval](https://anaconda.org/conda-forge/asteval) library to parse the passed commands. This means any command that can be used in python can be written on C++ side.     
