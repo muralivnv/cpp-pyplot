@@ -2,15 +2,32 @@
 
 ### Simple yet powerful, header-only library to plot c++ containers using python plotting tools and ZMQ protocol
 
-#### **C++ Requirements**
-* -std >= C++17
-* [cppzmq](https://github.com/zeromq/cppzmq)
-* libzmq
+## Requirements
+* **C++**
+  - --std >= c++17
+  - [cppzmq](https://github.com/zeromq/cppzmq)
+  - libzmq
+* **Python**
+  - [zeromq](https://anaconda.org/anaconda/zeromq)
+  - [pyzmq](https://anaconda.org/conda-forge/pyzmq)
+  - [asteval](https://anaconda.org/conda-forge/asteval)
 
-#### **Python Requirements**
-* [zeromq](https://anaconda.org/anaconda/zeromq)
-* [pyzmq](https://anaconda.org/conda-forge/pyzmq)
-* [asteval](https://anaconda.org/conda-forge/asteval)
+## Table of Contents
+* [Motivation](https://github.com/muralivnv/cpp-pyplot#Motivation)
+* [Usage](https://github.com/muralivnv/cpp-pyplot#Usage)
+* [How it Works](https://github.com/muralivnv/cpp-pyplot#How-it-works)
+* [Compilaton](https://github.com/muralivnv/cpp-pyplot#Compilation)
+* [API](https://github.com/muralivnv/cpp-pyplot#cppyplot)
+  - [set_python_path](https://github.com/muralivnv/cpp-pyplot#set_python_path)
+  - [set_host_ip](https://github.com/muralivnv/cpp-pyplot#set_host_ip)
+  - [operator <<](https://github.com/muralivnv/cpp-pyplot#operator-<<)
+  - [data_args](https://github.com/muralivnv/cpp-pyplot#data_args)
+  - [raw](https://github.com/muralivnv/cpp-pyplot#raw)
+* [Message to the User](https://github.com/muralivnv/cpp-pyplot#Message-to-the-User)
+* [Container Support](https://github.com/muralivnv/cpp-pyplot#Container-Support)
+  - [Custom Container Support](https://github.com/muralivnv/cpp-pyplot#Custom-Container-Support)
+<br/> <br/>
+
 
 ## Motivation
 Many C++ plotting libraries that exist today, they tend to replicate python plotting API in C++. There are 3 limitations with this approach. 
@@ -20,12 +37,8 @@ Many C++ plotting libraries that exist today, they tend to replicate python plot
 
 Even if the user is fine with the above limitations, he/she is limited to just one plotting library. What if there comes a need to use awesome **seaborn** capabilities or **bokeh-plot** features or **Plotly**, there are no packages that are readily available and even if they are, I am pretty sure that the above limitations will come into action.   
 
-Instead of reinventing the wheel this library uses python to do it's plotting. Given the awesome open source libraries, ZeroMQ and python-ASTEVAL, data pipe latency with ZeroMQ for inter process communication and latency for string command execution on python is negligible. 
+Given the awesome open source libraries, ZeroMQ and python-ASTEVAL, data pipe latency with ZeroMQ for inter process communication and latency for string command execution on python is negligible. 
 
-## To the User
-⭐ this repo if you are currently using it or if you find this implementation interesting. This way, if any other user comes across this repo, he/she may find it more interesting to dig a little deeper. 
-
-And if you are currently using this library, post a sample plotting snippet using the Issue tab and tagging the issue with label `sample_usage`.
 
 ## Usage
 ```cpp
@@ -43,7 +56,7 @@ std::iota(vec.begin(), vec.end(), 0.0F);
   Using stream insertion operator << 
 */
 
-// to plot the above container, use the same plotting commands from python
+// to plot the above std::vector, use the same plotting commands from python
 pyp << "plt.figure(figsize=(12,7))";
 
 // specify variable name directly in the plotting command
@@ -58,7 +71,7 @@ pyp.data_args(_p(vec));
 
 /* 
   Using Raw-string literal with member function 'raw'
-  Notice how the member function 'raw' takes containers as arguments along with the plotting commands
+  Member function 'raw' takes both plotting commands in string literal and data that need to be plotted.
 */
 pyp.raw("Rpyp(
   plt.figure(figsize=(12,7))
@@ -72,8 +85,66 @@ pyp.raw("Rpyp(
 
 For more complicated examples using matplotlib-subplots and bokeh-lib see **examples** folder in this repo.
 
-## ```pyp.data_args``` and ```pyp.raw```
-Member function, `data_args` and `raw`, is a variadic template function. Each container that is passed to `data_args` (or) `raw` need to be wrapped using the macro `_p` (`p` stands for *pair*).   
+
+
+## How-it-works
+Plot object `cppyplot` passes all the commands and containers to a python server (which is spawned automatically when an `cppyplot` object is created) using ZeroMQ. The spawned python server uses [asteval](https://anaconda.org/conda-forge/asteval) library to parse the passed commands. This means any command that can be used in python can be written on C++ side.     
+
+Note that the usage is not limited to just matplotlib. Bokeh, Plotly, etc. can also be used as long as the required libraries are available on the python side and imported in the `cppyplot_server.py` file under **include** directory.  
+
+
+
+## Compilation
+As the library uses zmq, link the source file which uses cppyplot.hpp with the libraries from `libzmq`  
+
+
+## ```cppyplot```
+Class `cppyplot` is a singleton class. This means multiple instantiations of cppyplot will use single zmq publisher and subscriber. 
+
+### ```set_python_path```
+If python is installed under different directory, pass python path to `cppyplot` using the function `set_python_path`. 
+```cpp
+#include "cppyplot.hpp"
+
+int main()
+{
+  // This static function need to be called only once before the first instantiation of the plot object
+  Cppyplot::cppyplot::set_python_path(PYTHON_PATH);
+  Cppyplot::cppyplot pyp;
+  ...
+}
+```
+
+### ```set_host_ip```
+If ZMQ connection need to be established under different address, specify it using the function `set_host_ip`. By default ```"tcp://127.0.0.1:5555"``` will be used.
+
+```cpp
+#include "cppyplot.hpp"
+
+int main()
+{
+  // This static function need to be called only once before the first instantiation of the plot object
+  Cppyplot::cppyplot::set_host_ip(HOST_ADDRESS);
+  Cppyplot::cppyplot pyp;
+  ...
+}
+```
+
+### ```operator <<```
+Plotting commands can be specified using stream insertion operator `<<`.
+```cpp
+pyp << "plt.figure(figsize=(12,7))";
+
+// specify variable name directly in the plotting command
+pyp << "plt.plot(vec, 'r-*', markersize=2, linewidth=1)";
+pyp << "plt.grid(True)";
+pyp << "plt.xlabel(\"index\")";
+pyp << "plt.ylabel(\"vec\")";
+pyp << "plt.show()";
+```
+
+### ```data_args```
+Member function, `data_args`,  is a variadic template function. Each container that is passed to `data_args` need to be wrapped using the macro `_p` (`p` stands for *pair*).   
 For example, instead of passing containers like   
 `pyp.data_args(vec_x, vec_y, vec_z, ...)`   
 pass the containers by wrapping them with macro `_p`   
@@ -81,33 +152,56 @@ pass the containers by wrapping them with macro `_p`
 
 The macro `_p` captures variable name and expands into ("variable_name", variable) pair.
 
-**Note**: Every container that is passed to python for plotting will be converted into an numpy array. This means fancy array slicing and array manipulations is possible. Just treat data as if it is originated in python with numpy.
+**Note:** Calling `data_args` function finalizes the plot and sends all the commands to the python server to plot.  
 
-Currently supports
-* 1D std vector
-* 1D std array
-* 2D std vector
-* 2D std array
-* Eigen containers
+### ```raw```
+Member function, `raw`, takes plotting commands in raw string literal format. An additional overload is provided for `raw` function to take data as arguments as well. Each container that is passed to `raw` need to be wrapped using the macro `_p` (similar to `data_args`).  This member function can be used in 2 ways. 
 
-For information on how to include support for custom containers read section [custom container support](https://github.com/muralivnv/Cppyplot#custom-container-support). 
-
-## How-it-works
-Plot object `cppyplot` passes all the commands and containers to a python server (which is spawned automatically when the `cppyplot` object is created) using ZeroMQ. The spawned python server uses [asteval](https://anaconda.org/conda-forge/asteval) library to parse the passed commands. This means any command that can be used in python can be written on C++ side.     
-
-Note that the usage is not limited to just matplotlib. Bokeh, Plotly, etc. can also be used as long as the required libraries are available on the python side and imported in the `cppyplot_server.py` file under **include** directory.  
-
-## Python-path
-If python is installed under different directory, pass python path to `cppyplot` object as
-
-```cpp
-Cppyplot::cppyplot pyp(python_path_str); // python_path_str is the full path to python executable
+* **Usage_1**:
+> Pass plotting commands to `raw` in string literal format and use `data_args` to specify containers to use.
+```cpp  
+pyp.raw("Rpyp(
+  plt.figure(figsize=(12,7))
+  plt.plot(vec, 'r-*', markersize=2, linewidth=1)
+  plt.grid(True)
+  plt.xlabel("index")
+  plt.ylabel("vec");
+  plt.show()
+)pyp");
+pyp.data_args(_p(vec));
 ```
 
-## Compilation
-As the library uses zmq, link the source file which uses cppyplot.hpp with the libraries from `libzmq`  
+* **Usage_2**:
+> Pass both plotting commands and containers to use to function `raw`
+```cpp  
+pyp.raw("Rpyp(
+  plt.figure(figsize=(12,7))
+  plt.plot(vec, 'r-*', markersize=2, linewidth=1)
+  plt.grid(True)
+  plt.xlabel("index")
+  plt.ylabel("vec");
+  plt.show()
+)pyp", _p(vec));
+```
 
-## Custom Container Support
+**Note**: Every container that is passed to python for plotting will be converted into an numpy array. This means python array slicing and data manipulations is possible.
+
+
+
+## Message to the User
+⭐ this repo if you are currently using this (or) like the approach.  
+If you are currently using this library, post a sample plotting snippet by creating an issue and tagging it with the label `sample_usage`.
+
+
+## Container Support
+Following are the containers that are currently supported
+* 1D vector (`std::vector<T>`)
+* 1D array  (`std::array<T, len>`)
+* 2D vector (`std::vector<std::vector<T>>`)
+* 2D array  (`std::array<std::array<T, cols>, rows>`)
+* Eigen containers
+
+### Custom Container Support
 By defining 3 helper functions, any c++ container can be adapted to pass onto python side. 
 
 Define the following functions at the end of the **cppyplot_container_support.h** located in the include folder.
