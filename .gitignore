@@ -2,3 +2,8 @@ zmq/*
 .vscode/*
 *.dll
 *.pdb
+*.exe
+*.obj
+*.html
+*.ruleset
+*.gif

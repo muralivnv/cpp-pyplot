@@ -20,7 +20,7 @@
 * [API](https://github.com/muralivnv/cpp-pyplot#cppyplot)
   - [set_python_path](https://github.com/muralivnv/cpp-pyplot#set_python_path)
   - [set_host_ip](https://github.com/muralivnv/cpp-pyplot#set_host_ip)
-  - [operator <<](https://github.com/muralivnv/cpp-pyplot#operator-<<)
+  - [operator <<](https://github.com/muralivnv/cpp-pyplot#operator-)
   - [data_args](https://github.com/muralivnv/cpp-pyplot#data_args)
   - [raw](https://github.com/muralivnv/cpp-pyplot#raw)
 * [Message to the User](https://github.com/muralivnv/cpp-pyplot#Message-to-the-User)
