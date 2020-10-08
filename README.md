@@ -92,7 +92,7 @@ See [Sinusoidal_animation.cpp](https://github.com/muralivnv/cpp-pyplot/blob/mast
 ![](https://github.com/muralivnv/cpp-pyplot/blob/master/misc/sin.gif)
 
 ### 2D Distribution Plotting
-See [distplot.cpp]() to reproduce below figure.
+See [distplot.cpp](https://github.com/muralivnv/cpp-pyplot/blob/master/examples/for_seaborn/distplot.cpp) to reproduce below figure.
 ![](https://github.com/muralivnv/cpp-pyplot/blob/master/misc/distplot.png)
 
 ## How-it-works
