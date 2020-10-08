@@ -241,7 +241,13 @@ std::string dedent_string(const std::string_view raw_str)
     {
       if (process_spaces == true)
       {
-        if ((raw_str[i] != ' ') && (raw_str[i] != '\t') && (raw_str[i] != '\n'))
+        if (raw_str[i] == '\n')
+        { 
+          process_spaces  = true;
+          line_start      = -1;
+          cur_space_count = 0;
+        }
+        else if ((raw_str[i] != ' ') && (raw_str[i] != '\t'))
         {
           process_spaces = false;
           line_start     = i;

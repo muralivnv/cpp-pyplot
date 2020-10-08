@@ -2,9 +2,6 @@ import zmq
 import sys
 
 from threading import Thread
-from asteval import Interpreter, make_symbol_table
-
-import queue
 import struct
 
 context = zmq.Context()
@@ -16,6 +13,23 @@ else:
 socket.setsockopt(zmq.LINGER, 0)
 socket.setsockopt_string(zmq.SUBSCRIBE, "")
 
+############
+## function to receive all publisher messages
+############
+import queue
+msg_queue   = queue.Queue()
+kill_thread = False
+
+def subscriber():
+    global socket, msg_queue
+    while (not kill_thread):
+        if (socket.poll(50, zmq.POLLIN)):
+            zmq_message = socket.recv()
+            msg_queue.put(zmq_message)
+
+subscriber_thread = Thread(target=subscriber)
+subscriber_thread.start()
+
 lib_sym = {}
 
 ## Import numpy and register the object in the symbol table
@@ -25,6 +39,9 @@ lib_sym['np'] = np
 ## Import matplotlib and register plot object in the symbol table
 import matplotlib.pyplot as plt
 lib_sym['plt'] = plt
+
+# from matplotlib.animation import FuncAnimation
+# lib_sym['FuncAnimation'] = FuncAnimation
 
 ## Import seaborn and register seaborn object in the symbol table
 # import seaborn as sns
@@ -45,24 +62,11 @@ lib_sym['plt'] = plt
 # lib_sym['output_file']      = output_file
 # lib_sym['show']             = show
 
-############
-## function to receive all publisher messages
-############
-msg_queue   = queue.Queue()
-kill_thread = False
+
+from asteval import Interpreter, make_symbol_table
 aeval     = Interpreter()
 plot_cmd  = None
 plot_data = {}
-
-def subscriber():
-    global socket, msg_queue
-    while (not kill_thread):
-        if (socket.poll(50, zmq.POLLIN)):
-            zmq_message = socket.recv()
-            msg_queue.put(zmq_message)
-
-subscriber_thread = Thread(target=subscriber)
-subscriber_thread.start()
 
 print("Started Plotting Server .... ")
 
