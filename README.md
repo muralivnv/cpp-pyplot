@@ -16,7 +16,7 @@
 * [Motivation](https://github.com/muralivnv/cpp-pyplot#Motivation)
 * [Usage](https://github.com/muralivnv/cpp-pyplot#Usage)
 * [How it Works](https://github.com/muralivnv/cpp-pyplot#How-it-works)
-* [Compilaton](https://github.com/muralivnv/cpp-pyplot#Compilation)
+* [Set-up](https://github.com/muralivnv/cpp-pyplot#Set-up)
 * [API](https://github.com/muralivnv/cpp-pyplot#cppyplot)
   - [set_python_path](https://github.com/muralivnv/cpp-pyplot#set_python_path)
   - [set_host_ip](https://github.com/muralivnv/cpp-pyplot#set_host_ip)
@@ -102,9 +102,42 @@ Note that the usage is not limited to just matplotlib. Bokeh, Plotly, etc. can a
 
 
 
-## Compilation
-As the library uses zmq, link the source file which uses cppyplot.hpp with the libraries from `libzmq`  
+## Set-up
+As the library uses zmq, link the source file which uses cppyplot.hpp with the libraries from `libzmq`.  
 
+### Installing Dependencies with **Conan**
+If conan package manager is used, use the provided conanfile.txt along with the following commands to install dependencies.
+
+* Debug mode  
+At project head run the following commands in shell
+```shell
+mkdir build && cd build
+mkdir Debug && cd Debug
+conan install ../.. --build -s build_type=Debug
+```
+* Release mode  
+At project head run the following commands in shell
+```shell
+cd build && mkdir Release
+cd Release
+conan install ../.. --build -s build_type=Release
+```
+
+### Building
+Once the dependencies are installed, use the following cmake commands to build the examples. 
+**Note:** `CMakeFiles.txt` was set to use MSVC and the following commands uses `Ninja` make system.
+* Debug Mode  
+```shell
+cd build && cd Debug
+cmake ../.. -G "Ninja" -DCMAKE_BUILD_TYPE=Debug
+ninja
+```
+* Release Mode
+```shell
+cd build && cd Release
+cmake ../.. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+ninja
+```
 
 ## ```cppyplot```
 Class `cppyplot` is a singleton class. This means multiple instantiations of cppyplot will use single zmq publisher and subscriber. 

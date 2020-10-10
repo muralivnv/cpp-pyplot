@@ -1,0 +1,27 @@
+# To install and build required packages use the following commands
+
+# For Debug mode
+  # mkdir build && cd build
+  # mkdir Debug && cd Debug
+  # conan install ../.. --build -s build_type=Debug
+
+# For Release mode
+  # cd build && mkdir Release
+  # cd Release
+  # conan install ../.. --build -s build_type=Release
+
+[requires]
+cppzmq/4.7.1
+zeromq/4.3.2
+libsodium/1.0.18
+
+[generators]
+cmake
+
+[options]
+zeromq:shared=True
+
+[imports]
+bin, *.dll -> ./bin
+lib, *.pdb -> ./bin
+lib, *.lib -> ./lib
