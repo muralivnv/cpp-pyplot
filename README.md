@@ -238,6 +238,8 @@ If you are currently using this library, post a sample plotting snippet by creat
 
 ## Container Support
 Following are the containers that are currently supported
+* Integral and floating point types
+* std::string and std::string_view
 * 1D vector (`std::vector<T>`)
 * 1D array  (`std::array<T, len>`)
 * 2D vector (`std::vector<std::vector<T>>`)
