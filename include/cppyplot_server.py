@@ -40,8 +40,8 @@ lib_sym['np'] = np
 import matplotlib.pyplot as plt
 lib_sym['plt'] = plt
 
-# from matplotlib.animation import FuncAnimation
-# lib_sym['FuncAnimation'] = FuncAnimation
+from matplotlib.animation import FuncAnimation
+lib_sym['FuncAnimation'] = FuncAnimation
 
 ## Import seaborn and register seaborn object in the symbol table
 # import seaborn as sns
@@ -83,6 +83,17 @@ def parse_shape(shape_str:str)->tuple:
     
     return tuple(shape)
 
+def handle_payload(data, data_type, data_len, data_shape):
+    if ((data_type == 'c') or (data_type == 'b') or (data_type == 'B')):
+        return (b''.join(data)).decode("utf-8")
+    else:
+        if data_shape[0] > 0:
+            data  = np.array(data)
+            return np.reshape(data, data_shape)
+    
+    return data[0]
+
+
 while(True):
     zmq_message = None
     if (not msg_queue.empty()):
@@ -98,8 +109,8 @@ while(True):
         data_len      = int(data_info[3])
         data_shape    = parse_shape(data_info[4])
         data_payload  = msg_queue.get()
-        data_payload  = np.array((struct.unpack("="+(data_type*data_len), data_payload)))
-        plot_data[data_info[1]] = np.reshape(data_payload, data_shape)
+        data_payload  = struct.unpack("="+(data_type*data_len), data_payload)
+        plot_data[data_info[1]] = handle_payload(data_payload, data_type, data_len, data_shape)
         msg_queue.task_done()
     elif(zmq_message[0:8] == b"finalize"):
         sym_table = {**lib_sym, **plot_data}

@@ -10,6 +10,59 @@ void custom_dealloc(void* data, void* hint)
   return; 
 }
 
+template<typename T>
+struct is_string : std::false_type {};
+
+template<>
+struct is_string<std::string> : std::true_type {};
+
+template<>
+struct is_string<std::string_view> : std::true_type {};
+
+template<typename T>
+inline constexpr bool is_string_v = is_string<T>::value;
+
+/*
+  * Integral and floating point datatypes
+*/
+template<typename T>
+inline auto container_size(const T data)
+        -> typename std::enable_if<std::is_arithmetic_v<T>, std::size_t>::type
+{ (void)(data); return 1u; }
+
+template<typename T>
+inline auto container_shape(const T data)
+        -> typename std::enable_if<std::is_arithmetic_v<T>, std::array<std::size_t, 1>>::type
+{ (void)(data); return std::array<std::size_t, 1>{0u}; }
+
+template<typename T>
+inline auto fill_zmq_buffer(const T data, zmq::message_t& buffer)
+        -> typename std::enable_if<std::is_arithmetic_v<T>, void>::type
+{
+  buffer.rebuild(&data, sizeof(T));
+}
+
+
+/*
+  * std::string and std::string_view
+*/
+template<typename T>
+inline auto container_size(const T& data)
+        -> typename std::enable_if<is_string_v<T>, std::size_t>::type
+{ return data.size(); }
+
+template<typename T>
+inline auto container_shape(const T& data)
+        -> typename std::enable_if<is_string_v<T>, std::array<std::size_t, 1>>::type
+{ (void)(data); return std::array<std::size_t, 1>{data.size()}; }
+
+template<typename T>
+inline auto fill_zmq_buffer(const T& data, zmq::message_t& buffer)
+        -> typename std::enable_if<is_string_v<T>, void>::type
+{
+  buffer.rebuild((void*)data.data(), sizeof(typename T::value_type)*data.size(), custom_dealloc, nullptr);
+}
+
 /*  
   * 1D Vector 
 */
