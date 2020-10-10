@@ -18,24 +18,28 @@ set(CMAKE_CXX_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2019/Buil
 if ((${CMAKE_BUILD_TYPE} MATCHES "Debug"))
   add_compile_options(-EHsc -Zi -RTC1 -MDd)
 else()
-  add_compile_options(/W4 /EHsc /O2 /fp:precise)
+  add_compile_options(/W4 /w14640 /EHsc /O2 /fp:precise)
 endif()
 
 # CONAN package manager Specific
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-# include directories
-include(${CMAKE_BINARY_DIR}/custominclude.txt)
+if(EXISTS "${CMAKE_BINARY_DIR}/custominclude.cmake")
+  # include directories
+  include(${CMAKE_BINARY_DIR}/custominclude.txt)
+endif()
 
 # matplotlib
 add_executable(sinusoidal_animation examples/for_matplotlib/sinusoidal_animation.cpp)
 add_executable(container_2d_imshow examples/for_matplotlib/container_2d_imshow.cpp)
 add_executable(subplot             examples/for_matplotlib/subplot.cpp)
+add_executable(realtime_plotting   examples/for_matplotlib/realtime_plotting.cpp)
 
 target_link_libraries(sinusoidal_animation ${CONAN_LIBS})
 target_link_libraries(container_2d_imshow ${CONAN_LIBS})
 target_link_libraries(subplot ${CONAN_LIBS})
+target_link_libraries(realtime_plotting ${CONAN_LIBS})
 
 # seaborn
 add_executable(distplot examples/for_seaborn/distplot.cpp)
