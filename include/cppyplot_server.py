@@ -40,8 +40,8 @@ lib_sym['np'] = np
 import matplotlib.pyplot as plt
 lib_sym['plt'] = plt
 
-from matplotlib.animation import FuncAnimation
-lib_sym['FuncAnimation'] = FuncAnimation
+# from matplotlib.animation import FuncAnimation
+# lib_sym['FuncAnimation'] = FuncAnimation
 
 ## Import seaborn and register seaborn object in the symbol table
 # import seaborn as sns
