@@ -23,5 +23,6 @@ zeromq:shared=True
 
 [imports]
 bin, *.dll -> ./bin
-lib, *.pdb -> ./bin
+lib, *.so* -> ./bin
 lib, *.lib -> ./lib
+lib, *.a   -> ./lib
