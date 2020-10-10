@@ -4,8 +4,6 @@
 #include <random>
 #include <numeric>
 
-#include <Eigen/Eigen/Core>
-
 /*
 * Uncomment seaborn imports in cppyplot_server.py for this example to work
 */
@@ -15,7 +13,6 @@ int main()
 {
   Cppyplot::cppyplot pyp;
 
-  Eigen::Matrix<double, 5000, 2> mat;
   std::vector<std::vector<double>> rand_mat (5000, std::vector<double>(2));
   std::random_device seed;
   std::mt19937 gen(seed());
@@ -28,7 +25,9 @@ int main()
     { elem = norm(gen); }
   }
 
+#ifdef EIGEN_AVAILABLE
   // fill eigen matrix
+  Eigen::Matrix<double, 5000, 2> mat;
   for (auto& row: mat.rowwise())
   {
     for (auto& elem : row)
@@ -48,6 +47,7 @@ int main()
   plt.title("Numpy type slicing on C++ Eigen matrix", fontsize=14)
   plt.show(block=False)
     )pyp", _p(mat));
+#endif
 
   // Using 2D std-vector
   pyp.raw(R"pyp(
@@ -58,7 +58,7 @@ int main()
   plt.grid(True)
   plt.xlabel("X", fontsize=12)
   plt.ylabel("Y", fontsize=12)
-  plt.title("Numpy type slicing on C++ 2D vector", fontsize=14)
+  plt.title("2D distribution plotting with seaborn", fontsize=14)
   plt.show()
     )pyp", _p(rand_mat));
 
