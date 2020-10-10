@@ -68,6 +68,11 @@ aeval     = Interpreter()
 plot_cmd  = None
 plot_data = {}
 
+SYM_IDX   = 1
+TYPE_IDX  = 2
+LEN_IDX   = 3
+SHAPE_IDX = 4
+
 print("Started Plotting Server .... ")
 
 def parse_shape(shape_str:str)->tuple:
@@ -105,12 +110,12 @@ while(True):
     if (zmq_message[0:4] == b"data"):
         data_info     = zmq_message.decode("utf-8").split('|')
         # 0: data, 1: var_name, 2: var_type, 3: n_elems, 4: array_shape
-        data_type     = data_info[2]
-        data_len      = int(data_info[3])
-        data_shape    = parse_shape(data_info[4])
+        data_type     = data_info[TYPE_IDX]
+        data_len      = int(data_info[LEN_IDX])
+        data_shape    = parse_shape(data_info[SHAPE_IDX])
         data_payload  = msg_queue.get()
         data_payload  = struct.unpack("="+(data_type*data_len), data_payload)
-        plot_data[data_info[1]] = handle_payload(data_payload, data_type, data_len, data_shape)
+        plot_data[data_info[SYM_IDX]] = handle_payload(data_payload, data_type, data_len, data_shape)
         msg_queue.task_done()
     elif(zmq_message[0:8] == b"finalize"):
         sym_table = {**lib_sym, **plot_data}
