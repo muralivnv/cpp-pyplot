@@ -12,6 +12,8 @@
   - [pyzmq](https://anaconda.org/conda-forge/pyzmq)
   - [asteval](https://anaconda.org/conda-forge/asteval)
 
+![](https://img.shields.io/badge/tested-Windows-brightgreen) ![](https://img.shields.io/badge/tested-Linux-brightgreen)
+
 ## Table of Contents
 * [Motivation](https://github.com/muralivnv/cpp-pyplot#Motivation)
 * [Usage](https://github.com/muralivnv/cpp-pyplot#Usage)
