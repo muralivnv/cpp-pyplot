@@ -115,14 +115,14 @@ At project head run the following commands in shell
 ```shell
 mkdir build && cd build
 mkdir Debug && cd Debug
-conan install ../.. --build -s build_type=Debug
+conan install ../.. --build missing -s build_type=Debug
 ```
 * Release mode  
 At project head run the following commands in shell
 ```shell
 cd build && mkdir Release
 cd Release
-conan install ../.. --build -s build_type=Release
+conan install ../.. --build missing -s build_type=Release
 ```
 
 ### Building
