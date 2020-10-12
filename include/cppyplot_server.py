@@ -73,7 +73,7 @@ TYPE_IDX  = 2
 LEN_IDX   = 3
 SHAPE_IDX = 4
 
-print("Started Plotting Server .... ")
+print("[INFO] Plotting server initialized ...")
 
 def parse_shape(shape_str:str)->tuple:
     shape = []
@@ -90,14 +90,13 @@ def parse_shape(shape_str:str)->tuple:
 
 def handle_payload(data, data_type, data_len, data_shape):
     if ((data_type == 'c') or (data_type == 'b') or (data_type == 'B')):
-        return (b''.join(data)).decode("utf-8")
+        data_converted = struct.unpack("="+(data_type*data_len), data)
+        return (b''.join(data_converted)).decode("utf-8")
     else:
         if data_shape[0] > 0:
-            data  = np.array(data)
-            return np.reshape(data, data_shape)
-    
-    return data[0]
-
+            return np.ndarray(data_shape, dtype="="+data_type, buffer=data)
+        else:
+            return (struct.unpack("="+data_type, data))[0]
 
 while(True):
     zmq_message = None
@@ -114,7 +113,6 @@ while(True):
         data_len      = int(data_info[LEN_IDX])
         data_shape    = parse_shape(data_info[SHAPE_IDX])
         data_payload  = msg_queue.get()
-        data_payload  = struct.unpack("="+(data_type*data_len), data_payload)
         plot_data[data_info[SYM_IDX]] = handle_payload(data_payload, data_type, data_len, data_shape)
         msg_queue.task_done()
     elif(zmq_message[0:8] == b"finalize"):
@@ -131,8 +129,11 @@ while(True):
         plot_cmd  = None
         plot_data = {}
     elif(zmq_message == b"exit"):
+        print("[INFO] Received exit message, exiting")
         kill_thread = True
         subscriber_thread.join()
         sys.exit(0)
     else:
+        print("[INFO] Executing ... \n")
         plot_cmd = zmq_message.decode("utf-8")
+        print(plot_cmd, '\n')
