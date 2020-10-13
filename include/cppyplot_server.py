@@ -134,6 +134,6 @@ while(True):
         subscriber_thread.join()
         sys.exit(0)
     else:
-        print("[INFO] Executing ... \n")
+        #print("[INFO] Executing ... \n")
         plot_cmd = zmq_message.decode("utf-8")
-        print(plot_cmd, '\n')
+        #print(plot_cmd, '\n')
