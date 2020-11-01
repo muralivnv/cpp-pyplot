@@ -29,6 +29,7 @@ def subscriber():
 
 subscriber_thread = Thread(target=subscriber)
 subscriber_thread.start()
+print("[INFO] Started subscriber thread ")
 
 lib_sym = {}
 
@@ -64,7 +65,8 @@ lib_sym['plt'] = plt
 
 
 from asteval import Interpreter, make_symbol_table
-aeval     = Interpreter()
+aeval          = Interpreter()
+aeval.symtable = make_symbol_table(use_numpy=True, **lib_sym)
 plot_cmd  = None
 plot_data = {}
 
@@ -98,42 +100,47 @@ def handle_payload(data, data_type, data_len, data_shape):
         else:
             return (struct.unpack("="+data_type, data))[0]
 
-while(True):
-    zmq_message = None
-    if (not msg_queue.empty()):
-        zmq_message = msg_queue.get()
-        msg_queue.task_done()
-    else:
-        continue
-    
-    if (zmq_message[0:4] == b"data"):
-        data_info     = zmq_message.decode("utf-8").split('|')
-        # 0: data, 1: var_name, 2: var_type, 3: n_elems, 4: array_shape
-        data_type     = data_info[TYPE_IDX]
-        data_len      = int(data_info[LEN_IDX])
-        data_shape    = parse_shape(data_info[SHAPE_IDX])
-        data_payload  = msg_queue.get()
-        plot_data[data_info[SYM_IDX]] = handle_payload(data_payload, data_type, data_len, data_shape)
-        msg_queue.task_done()
-    elif(zmq_message[0:8] == b"finalize"):
-        sym_table = {**lib_sym, **plot_data}
-        aeval.symtable = make_symbol_table(use_numpy=True, **sym_table)
-        aeval.eval(plot_cmd)
+try:
+    while(True):
+        zmq_message = None
+        if (not msg_queue.empty()):
+            zmq_message = msg_queue.get()
+            msg_queue.task_done()
+        else:
+            continue
+        
+        if (zmq_message[0:4] == b"data"):
+            data_info     = zmq_message.decode("utf-8").split('|')
+            # 0: data, 1: var_name, 2: var_type, 3: n_elems, 4: array_shape
+            data_type     = data_info[TYPE_IDX]
+            data_len      = int(data_info[LEN_IDX])
+            data_shape    = parse_shape(data_info[SHAPE_IDX])
+            data_payload  = msg_queue.get()
+            plot_data[data_info[SYM_IDX]] = handle_payload(data_payload, data_type, data_len, data_shape)
+            msg_queue.task_done()
+        elif(zmq_message[0:8] == b"finalize"):
+            aeval.symtable = {**aeval.symtable, **plot_data}
+            aeval.eval(plot_cmd)
 
-        # Some error happened pause execution by creating sample matplotlib windows
-        if aeval.error_msg != None:
-            aeval.error_msg = None
-            plt.figure(figsize=(6,5))
-            plt.title("Exception from ASTEVAL, check stdout", fontsize=14)
-            plt.show()
-        plot_cmd  = None
-        plot_data = {}
-    elif(zmq_message == b"exit"):
-        print("[INFO] Received exit message, exiting")
-        kill_thread = True
-        subscriber_thread.join()
-        sys.exit(0)
-    else:
-        #print("[INFO] Executing ... \n")
-        plot_cmd = zmq_message.decode("utf-8")
-        #print(plot_cmd, '\n')
+            # Some error happened pause execution by creating sample matplotlib windows
+            if aeval.error_msg != None:
+                aeval.error_msg = None
+                plt.figure(figsize=(6,5))
+                plt.title("Exception from ASTEVAL, check stdout", fontsize=14)
+                plt.show()
+            plot_cmd  = None
+            plot_data = {}
+        elif(zmq_message == b"exit"):
+            print("[INFO] Received exit message, exiting")
+            kill_thread = True
+            subscriber_thread.join()
+            sys.exit(0)
+        else:
+            # print("[INFO] Executing ... \n")
+            plot_cmd = zmq_message.decode("utf-8")
+            # print(plot_cmd, '\n')
+except KeyboardInterrupt as e:
+    print("[Error] Received keyboardInterrupt, killing subscriber thread ")
+    kill_thread = True
+    subscriber_thread.join()
+    sys.exit(e)
