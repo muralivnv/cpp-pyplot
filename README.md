@@ -28,6 +28,7 @@
 * [Message to the User](https://github.com/muralivnv/cpp-pyplot#Message-to-the-User)
 * [Container Support](https://github.com/muralivnv/cpp-pyplot#Container-Support)
   - [Custom Container Support](https://github.com/muralivnv/cpp-pyplot#Custom-Container-Support)
+* [Let Your Imagination Run Wild](https://github.com/muralivnv/cpp-pyplot#Let-Your-Imagination-Run-Wild)
 <br/> <br/>
 
 
@@ -315,3 +316,60 @@ inline void fill_zmq_buffer(const std::array<std::array<T, M>, N>& data, zmq::me
   }
 }
 ```
+
+## Let Your Imagination Run Wild
+
+Let's say you are designing a deep neural network and you want to do some analysis on the gradient updates (or) updated weights of the model. One way to do this is to write a function to export this data into a text (or) binary format and load this data later inside a script for further analysis.  
+Now, writing a function to write data to a file and reading data from a file is just a waste of time if the only use case of this function is to do immediate data analysis. As this library passes all the data to python, we could do the following.
+
+#### Inside c++ project
+```cpp
+
+// somewhere in the scope, cppyplot plot instance has been created
+Cppyplot::cppyplot pyp;
+
+// initialize lists
+pyp.raw(R"pyp(
+weights_hist   = []
+gradients_hist = []
+)pyp");
+
+for (size_t epoch = 0u; epoch < n_epochs; epoch++)
+{
+  // do neural network forward and back propagation and obtain gradients
+  
+  // update weights
+  
+  // store weights and gradients
+  pyp.raw(R"pyp(
+  # note this 'weights' is the variable name in c++ where weights of the network is store
+  weights_hist.append(weights)
+  
+  # note this 'weight_gradient' is the variable name in c++ where gradients of the weights is stored
+  gradients_hist.append(weight_gradient)
+  )pyp", _p(weights), _p(weight_gradient));
+}
+
+int temp = 0;
+
+// save data for later use
+pyp.raw(R"pyp(
+weights_hist = np.array(weights_hist)
+gradient_hist = np.array(gradient_hist)
+np.save("weights_hist.npy", weights_hist)
+np.save("gradient_hist.npy", gradient_hist)
+
+)pyp", _p(temp));
+// here 'temp' is being sent as the current mechanism will only send commands with data payload
+
+```
+
+#### Inside python script
+```py
+
+# all we have to do to load data is
+
+weights_hist = np.load("weights_hist.npy")
+gradient_hist = np.load("gradient_hist.npy")
+```
+
