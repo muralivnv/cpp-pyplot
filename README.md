@@ -33,12 +33,12 @@
 
 
 ## Motivation
-Many C++ plotting libraries that exist today, they tend to replicate python plotting API in C++. There are 3 limitations with this approach. 
-1.  There is only so much a developer can acheive in C++ to replicate python plotting API (for example, using named input args during function call is not that easy to implement on C++).  
+Many C++ plotting libraries that exist today, they tend to replicate python plotting API in C++. There are several limitations to this approach, 
+1.  Because of the language limitations (for example, using named input args during function call is not that easy to implement in C++) the final API is complicated. 
 2.  The end user need to learn new plotting API. 
 3.  The most important of all, no/incomplete documentation. 
 
-Even if the user is fine with the above limitations, he/she is limited to just one plotting library. What if there comes a need to use awesome **seaborn** capabilities or **bokeh-plot** features or **Plotly**, there are no packages that are readily available and even if they are, I am pretty sure that the above limitations will come into action.   
+Even if the user is fine with the above limitations, he/she is limited to just one plotting library. What if there comes a need to use awesome **seaborn** capabilities or **bokeh-plot** features or **Plotly**, there are no packages that are readily available.  
 
 Given the awesome open source libraries, ZeroMQ and python-ASTEVAL, data pipe latency with ZeroMQ for inter process communication and latency for string command execution on python is negligible. 
 
