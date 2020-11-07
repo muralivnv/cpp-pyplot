@@ -19,6 +19,8 @@
 * [Usage](https://github.com/muralivnv/cpp-pyplot#Usage)
 * [How it Works](https://github.com/muralivnv/cpp-pyplot#How-it-works)
 * [Set-up](https://github.com/muralivnv/cpp-pyplot#Set-up)
+  - [with Conan](https://github.com/muralivnv/cpp-pyplot#Installing-Dependencies-with-Conan)
+  - [with Vcpkg](https://github.com/muralivnv/cpp-pyplot#Installing-Dependencies-with-vcpkg)
 * [API](https://github.com/muralivnv/cpp-pyplot#cppyplot)
   - [set_python_path](https://github.com/muralivnv/cpp-pyplot#set_python_path)
   - [set_host_ip](https://github.com/muralivnv/cpp-pyplot#set_host_ip)
@@ -125,8 +127,7 @@ cd build && mkdir Release
 cd Release
 conan install ../.. --build missing -s build_type=Release
 ```
-
-### Building
+#### Building 
 Once the dependencies are installed, use the following cmake commands to build the examples. 
 **Note:** `CMakeFiles.txt` was set to use MSVC and the following commands uses `Ninja` make system.
 * Debug Mode  
@@ -141,6 +142,18 @@ cd build && cd Release
 cmake ../.. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 ninja
 ```
+
+### Installing Dependencies with **vcpkg**
+If vcpkg package manager is used, execute the following commands in shell to install required dependencies.
+```shell
+vcpkg install zeromq:<arch-type>
+vcpkg install cppzmq:<arch-type>
+```
+where `<arch-type>` is either `x86-windows` or `x64-windows`.  
+Once the installation is done, link the cpp file which is using this library with `libzmq-mt-*.lib` in **Release** mode and with `libzmq-mt-gd-*.lib` in **Debug** mode.  
+Once the project is compiled into an executable, copy both `libzmq-mt-*.dll` and `libzmq-mt-gd-*.dll` into the project executable folder.  
+**Note**: `libzmq-*.lib` and `libzmq-*.dll` can be found under the library installation location. 
+
 
 ## ```cppyplot```
 Class `cppyplot` is a singleton class. This means multiple instantiations of cppyplot will use single zmq publisher and subscriber. 
