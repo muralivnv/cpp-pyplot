@@ -252,13 +252,18 @@ If you are currently using this library, post a sample plotting snippet by creat
 
 ## Container Support
 Following are the containers that are currently supported
-* Integral and floating point types
-* std::string and std::string_view
-* 1D vector (`std::vector<T>`)
-* 1D array  (`std::array<T, len>`)
-* 2D vector (`std::vector<std::vector<T>>`)
-* 2D array  (`std::array<std::array<T, cols>, rows>`)
-* Eigen containers
+* Integral and floating point types  
+  - `char`, `signed char`, `unsigned char`, `short`, `unsigned short`, `int`, `unsigned int`, `long`, `unsigned long`, `long long`, `unsigned long long`, `float`, `double`
+  
+* `std::string` and `std::string_view`    
+
+* 1D `std::vector` and `std::array` of type `T`  
+   with `T` being integral and floating point types
+   
+* 2D `std::vector` and `std::array` of type `T`  
+  with `T` being integral and floating point types
+  
+* Eigen containers of integral and floating point types  
 
 ### Custom Container Support
 By defining 3 helper functions, any c++ container can be adapted to pass onto python side. 
