@@ -27,6 +27,7 @@
   - [operator <<](https://github.com/muralivnv/cpp-pyplot#operator-)
   - [data_args](https://github.com/muralivnv/cpp-pyplot#data_args)
   - [raw](https://github.com/muralivnv/cpp-pyplot#raw)
+  - [raw_nowait](https://github.com/muralivnv/cppy-plot#raw_nowait)
 * [Message to the User](https://github.com/muralivnv/cpp-pyplot#Message-to-the-User)
 * [Container Support](https://github.com/muralivnv/cpp-pyplot#Container-Support)
   - [Custom Container Support](https://github.com/muralivnv/cpp-pyplot#Custom-Container-Support)
@@ -243,7 +244,8 @@ pyp.raw("Rpyp(
 
 **Note**: Every container that is passed to python for plotting will be converted into an numpy array. This means python array slicing and data manipulations is possible.
 
-
+### ```raw_nowait```
+Unlike function `raw`, using this function will send the commands to python server for execution without waiting for data payload.
 
 ## Message to the User
 ⭐ this repo if you are currently using this (or) like the approach.  
