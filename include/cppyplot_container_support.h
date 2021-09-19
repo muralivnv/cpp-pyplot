@@ -85,11 +85,11 @@ inline void fill_zmq_buffer(const std::vector<T>& data, zmq::message_t& buffer)
 */
 template<typename T, std::size_t N>
 inline std::size_t container_size(const std::array<T, N>& data)
-{ return N; }
+{ (void)data; return N; }
 
 template<typename T, std::size_t N>
 inline std::array<std::size_t,1> container_shape(const std::array<T, N>& data)
-{ return std::array<std::size_t, 1>{N}; }
+{ (void)data; return std::array<std::size_t, 1>{N}; }
 
 template<typename T, std::size_t N>
 inline void fill_zmq_buffer(const std::array<T, N>& data, zmq::message_t& buffer)

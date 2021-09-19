@@ -98,10 +98,9 @@ class cppyplot{
         server_file_spawn += " &"s;
 #endif
         std::system(server_file_spawn.c_str());
-        std::this_thread::sleep_for(1.5s);
+        std::this_thread::sleep_for(3.0s);
 
         cppyplot::is_zmq_established_ = true;
-
         std::atexit(zmq_kill_command);
       }
     }
@@ -147,6 +146,21 @@ class cppyplot{
       data_args(std::forward<std::pair<std::string, Val_t>>(args)...);
     }
 
+    template<unsigned int N>
+    void raw_nowait(const char (&input_cmds)[N])
+    {
+      plot_cmds_ << dedent_string(input_cmds);
+      
+      zmq::message_t cmds(plot_cmds_.str());
+      cppyplot::socket_.send(cmds, zmq::send_flags::none);
+
+      zmq::message_t final("finalize", 8);
+      cppyplot::socket_.send(final, zmq::send_flags::none);
+
+      /* reset */
+      plot_cmds_.str("");
+    }
+
     template<typename T>
     inline std::string create_header(const std::string& key, const T& cont) noexcept
     {
@@ -186,11 +200,12 @@ class cppyplot{
     template<typename... Val_t>
     void data_args(std::pair<std::string, Val_t>&&... args)
     {
-      (send_container(args.first, args.second), ...);
-
       zmq::message_t cmds(plot_cmds_.str());
       cppyplot::socket_.send(cmds, zmq::send_flags::none);
 
+      (send_container(args.first, args.second), ...);
+
+      std::this_thread::sleep_for(5ms); // small delay which helps in eliminating packet loss
       zmq::message_t final("finalize", 8);
       cppyplot::socket_.send(final, zmq::send_flags::none);
 
