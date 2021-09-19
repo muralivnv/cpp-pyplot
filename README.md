@@ -27,7 +27,7 @@
   - [operator <<](https://github.com/muralivnv/cpp-pyplot#operator-)
   - [data_args](https://github.com/muralivnv/cpp-pyplot#data_args)
   - [raw](https://github.com/muralivnv/cpp-pyplot#raw)
-  - [raw_nowait](https://github.com/muralivnv/cppy-plot#raw_nowait)
+  - [raw_nowait](https://github.com/muralivnv/cpp-pyplot#raw_nowait)
 * [Message to the User](https://github.com/muralivnv/cpp-pyplot#Message-to-the-User)
 * [Container Support](https://github.com/muralivnv/cpp-pyplot#Container-Support)
   - [Custom Container Support](https://github.com/muralivnv/cpp-pyplot#Custom-Container-Support)
